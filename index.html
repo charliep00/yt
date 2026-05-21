@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>YouTube Feed+</title>
+  <title>Term 3 Math Games</title>
+
   <style>
     body {
       margin: 0;
@@ -10,23 +11,62 @@
       color: white;
     }
 
+    /* CALCULATOR SCREEN */
+    #lockScreen {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: black;
+    }
+
+    .calc {
+      width: 250px;
+      background: #222;
+      padding: 20px;
+      border-radius: 15px;
+    }
+
+    .display {
+      background: black;
+      color: lime;
+      padding: 10px;
+      margin-bottom: 10px;
+      text-align: right;
+      font-size: 20px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 15px;
+      background: #333;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
+    /* MAIN APP */
+    #app {
+      display: none;
+    }
+
     header {
       display: flex;
       align-items: center;
       gap: 15px;
       padding: 10px 20px;
-      background: #0f0f0f;
       border-bottom: 1px solid #222;
-      position: sticky;
-      top: 0;
-      z-index: 100;
     }
 
     .logo {
       color: red;
       font-weight: bold;
-      font-size: 20px;
-      cursor: pointer; /* 👈 makes it clickable */
+      cursor: pointer;
     }
 
     input {
@@ -39,7 +79,7 @@
     }
 
     button {
-      padding: 10px 15px;
+      padding: 10px;
       border-radius: 20px;
       border: none;
       background: red;
@@ -54,74 +94,92 @@
       padding: 20px;
     }
 
-    .card {
-      cursor: pointer;
-    }
-
     iframe {
       width: 100%;
       height: 180px;
       border-radius: 10px;
-      border: none;
-    }
-
-    h3 {
-      font-size: 14px;
-      margin: 8px 0;
-    }
-
-    .center {
-      text-align: center;
-      margin-top: 100px;
     }
   </style>
 </head>
 
 <body>
 
-<header>
-  <!-- 👇 CLICKABLE LOGO -->
-  <div class="logo" onclick="goHome()">YouTube+</div>
+<!-- 🔒 LOCK SCREEN -->
+<div id="lockScreen">
+  <div class="calc">
+    <div id="display" class="display">0</div>
+    <div class="buttons">
+      <div class="btn" onclick="press(7)">7</div>
+      <div class="btn" onclick="press(8)">8</div>
+      <div class="btn" onclick="press(9)">9</div>
+      <div class="btn" onclick="clearDisplay()">C</div>
 
-  <input id="searchInput" placeholder="Search YouTube...">
+      <div class="btn" onclick="press(4)">4</div>
+      <div class="btn" onclick="press(5)">5</div>
+      <div class="btn" onclick="press(6)">6</div>
+      <div class="btn" onclick="press(0)">0</div>
+
+      <div class="btn" onclick="press(1)">1</div>
+      <div class="btn" onclick="press(2)">2</div>
+      <div class="btn" onclick="press(3)">3</div>
+      <div class="btn" onclick="press(9)">9</div>
+    </div>
+  </div>
+</div>
+
+<!-- 🎬 APP -->
+<div id="app">
+
+<header>
+  <div class="logo" onclick="goHome()">YouTube+</div>
+  <input id="searchInput" placeholder="Search...">
   <button onclick="search()">Search</button>
 </header>
 
-<div id="welcome" class="center"></div>
-<div class="feed" id="feed"></div>
+<div id="feed" class="feed"></div>
+
+</div>
 
 <script>
+let input = "";
+
+function press(num) {
+  input += num;
+  document.getElementById("display").innerText = input;
+
+  if (input === "9999") {
+    document.getElementById("lockScreen").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    loadHome();
+  }
+
+  if (input.length > 4) input = "";
+}
+
+function clearDisplay() {
+  input = "";
+  document.getElementById("display").innerText = "0";
+}
+
+/* PROFILE */
 let profile = JSON.parse(localStorage.getItem("profile")) || {
-  searches: [],
-  categories: {}
+  searches: {}
 };
 
 function save() {
   localStorage.setItem("profile", JSON.stringify(profile));
 }
 
-function getCategory(title) {
-  title = title.toLowerCase();
-  if (title.includes("music")) return "music";
-  if (title.includes("game")) return "gaming";
-  if (title.includes("news")) return "news";
-  return "general";
-}
-
-function track(title) {
-  const cat = getCategory(title);
-  profile.categories[cat] = (profile.categories[cat] || 0) + 1;
-  save();
-}
-
+/* FETCH */
 async function fetchVideos(query) {
   const res = await fetch(
-    "https://youtube-reco.charlieprenticemc.workers.dev/feed?q=" + encodeURIComponent(query)
+    "https://youtube-reco.charlieprenticemc.workers.dev/feed?q=" + query
   );
   const data = await res.json();
   return data.items || [];
 }
 
+/* RENDER */
 function render(videos) {
   const feed = document.getElementById("feed");
   feed.innerHTML = "";
@@ -131,55 +189,56 @@ function render(videos) {
     const title = v.snippet.title;
 
     const div = document.createElement("div");
-    div.className = "card";
 
     div.innerHTML = `
       <iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>
-      <h3>${title}</h3>
+      <p>${title}</p>
     `;
-
-    div.onclick = () => track(title);
 
     feed.appendChild(div);
   });
 }
 
+/* SEARCH */
 async function search() {
   const query = document.getElementById("searchInput").value;
   if (!query) return;
 
-  profile.searches.push(query);
+  profile.searches[query] = (profile.searches[query] || 0) + 1;
   save();
 
-  const videos = await fetchVideos(query);
-  render(videos);
-
-  document.getElementById("welcome").innerHTML = "";
+  const vids = await fetchVideos(query);
+  render(vids);
 }
 
+/* HOME (SMART RECOMMENDATIONS) */
 async function loadHome() {
-  const welcome = document.getElementById("welcome");
+  const searches = Object.entries(profile.searches);
 
-  if (profile.searches.length === 0) {
-    welcome.innerHTML = "<h2>Search something to start your feed</h2>";
-    document.getElementById("feed").innerHTML = "";
+  if (searches.length === 0) {
+    document.getElementById("feed").innerHTML =
+      "<h2 style='text-align:center'>Search to start</h2>";
     return;
   }
 
-  const lastSearch = profile.searches[profile.searches.length - 1];
-  const videos = await fetchVideos(lastSearch);
-  render(videos);
+  // sort by most used
+  searches.sort((a, b) => b[1] - a[1]);
 
-  welcome.innerHTML = "<h3>Recommended for you (based on your searches)</h3>";
+  let allVideos = [];
+
+  for (let i = 0; i < Math.min(3, searches.length); i++) {
+    const vids = await fetchVideos(searches[i][0]);
+    allVideos = allVideos.concat(vids);
+  }
+
+  render(allVideos);
 }
 
-/* 👇 NEW FUNCTION */
+/* HOME BUTTON */
 function goHome() {
   document.getElementById("searchInput").value = "";
   loadHome();
 }
-
-loadHome();
 </script>
 
 </body>
