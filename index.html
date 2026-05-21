@@ -86,86 +86,19 @@
 
 <script>
 
-async function loadVideos() {
-  try {
-    const res = await fetch("https://youtube-reco.charlieprenticemc.workers.dev/feed");
-    const data = await res.json();
 
-    console.log("WORKER DATA:", data);
-
-    const feed = document.getElementById("feed");
-    feed.innerHTML = "";
-
-    if (!data.items) {
-      feed.innerHTML = "<p style='color:red;'>Worker returned no items</p>";
-      return;
-    }
-
-    data.items.forEach(video => {
-      const videoId = video.id;
-      const title = video.snippet.title;
-
-      const div = document.createElement("div");
-      div.className = "card";
-
-      const category = getCategory(title);
-
-      div.innerHTML = `
-        <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-        <h3>${title}</h3>
-      `;
-
-      div.onclick = () => trackVideo(category);
-
-      window.addEventListener("scroll", () => {
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
-    loadVideos();
-  }
-});
-      feed.appendChild(div);
-    });
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById("feed").innerHTML =
-      "<p style='color:red;'>Failed to load feed</p>";
-  }
-}
-
-loadVideos();
-
-</script>
-<script>
 let userProfile = JSON.parse(localStorage.getItem("profile")) || {
-  categories: {}
+  categories: {},
+  likes: [],
+  dislikes: [],
+  watchTime: {}
 };
 
 function saveProfile() {
   localStorage.setItem("profile", JSON.stringify(userProfile));
 }
 
-function trackVideo(category) {
-  if (!userProfile.categories[category]) {
-    userProfile.categories[category] = 0;
-  }
-  userProfile.categories[category] += 1;
-  saveProfile();
-}
 
-function getTopCategory() {
-  let top = "all";
-  let max = 0;
-
-  for (let c in userProfile.categories) {
-    if (userProfile.categories[c] > max) {
-      max = userProfile.categories[c];
-      top = c;
-    }
-  }
-  return top;
-}
-</script>
-<script>
 function getCategory(title) {
   title = title.toLowerCase();
 
@@ -176,42 +109,81 @@ function getCategory(title) {
 
   return "general";
 }
-  let userProfile = JSON.parse(localStorage.getItem("profile")) || {
-  categories: {},
-  likes: [],
-  dislikes: {},
-  watchTime: {}
-};
 
-function saveProfile() {
-  localStorage.setItem("profile", JSON.stringify(userProfile));
-}
-  function getCategory(title) {
-  title = title.toLowerCase();
 
-  if (title.includes("music")) return "music";
-  if (title.includes("game")) return "gaming";
-  if (title.includes("tech") || title.includes("ai")) return "tech";
-  if (title.includes("news")) return "news";
-
-  return "general";
-}
-  function likeVideo(id) {
-  userProfile.likes.push(id);
-  saveProfile();
-}
-
-function dislikeVideo(id) {
-  userProfile.dislikes.push(id);
-  saveProfile();
-}
-  let watchStart = 0;
+let watchStart = 0;
 let currentVideoId = null;
 
 function startWatch(videoId) {
   currentVideoId = videoId;
   watchStart = Date.now();
 }
+
+function trackVideo(category) {
+  userProfile.categories[category] =
+    (userProfile.categories[category] || 0) + 1;
+
+  saveProfile();
+}
+
+
+let loading = false;
+
+window.addEventListener("scroll", () => {
+  if (loading) return;
+
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+    loadVideos();
+  }
+});
+
+
+async function loadVideos() {
+  try {
+    loading = true;
+
+    const res = await fetch("https://youtube-reco.charlieprenticemc.workers.dev/feed");
+    const data = await res.json();
+
+    const feed = document.getElementById("feed");
+
+    if (!data.items) {
+      feed.innerHTML = "<p style='color:red;'>No videos found</p>";
+      loading = false;
+      return;
+    }
+
+    data.items.forEach(video => {
+      const videoId = video.id;
+      const title = video.snippet.title;
+      const category = getCategory(title);
+
+      const div = document.createElement("div");
+      div.className = "card";
+
+      div.innerHTML = `
+        <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
+        <h3>${title}</h3>
+      `;
+
+      div.onclick = () => {
+        trackVideo(category);
+        startWatch(videoId);
+      };
+
+      feed.appendChild(div);
+    });
+
+    loading = false;
+
+  } catch (err) {
+    console.error(err);
+    loading = false;
+  }
+}
+
+
+loadVideos();
 </script>
   
 </body>
