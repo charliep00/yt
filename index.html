@@ -2,7 +2,8 @@
 <html>
 <head>
   <link rel="icon" href="favicon.ico" type="image/x-icon">
-  <title>Math Test Revision Games</title>
+  <title>YouTube Feed+</title>
+
   <style>
   body {
     margin: 0;
@@ -16,20 +17,47 @@
     top: 0;
     z-index: 100;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
     padding: 15px;
     background: rgba(20, 20, 20, 0.7);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255,255,255,0.1);
-    font-size: 20px;
-    font-weight: bold;
   }
 
   .logo {
     width: 28px;
     height: 28px;
+  }
+
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  .search-box {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+  }
+
+  input {
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    width: 200px;
+  }
+
+  button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: #ff0000;
+    color: white;
   }
 
   .feed {
@@ -52,7 +80,6 @@
 
   .card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
   }
 
   iframe {
@@ -69,91 +96,133 @@
   }
   </style>
 </head>
+
 <body>
 
 <header>
-  <svg class="logo" viewBox="0 0 24 24" fill="red">
-    <path d="M10 15l5.19-3L10 9v6zm11.5-3c0-1.3-.1-2.2-.3-3
-    -.2-.9-.7-1.6-1.5-1.8C18.2 6 12 6 12 6s-6.2 0-7.7.4
-    c-.8.2-1.3.9-1.5 1.8C2.6 9.8 2.5 10.7 2.5 12s.1 2.2.3 3
-    c.2.9.7 1.6 1.5 1.8C5.8 17 12 17 12 17s6.2 0 7.7-.4
-    c.8-.2 1.3-.9 1.5-1.8.2-.8.3-1.7.3-3z"/>
-  </svg>
-  YouTube Feed+
+  <div class="title">
+    <svg class="logo" viewBox="0 0 24 24" fill="red">
+      <path d="M10 15l5.19-3L10 9v6z"/>
+    </svg>
+    YouTube Feed+
+  </div>
+
+  <div class="search-box">
+    <input id="searchInput" placeholder="Search videos..." />
+    <button onclick="searchVideos()">Search</button>
+  </div>
 </header>
 
 <div class="feed" id="feed"></div>
 
 <script>
 
-
 let userProfile = JSON.parse(localStorage.getItem("profile")) || {
   categories: {},
-  likes: [],
-  dislikes: [],
-  watchTime: {}
+  searches: [],
+  seen: {}
 };
 
 function saveProfile() {
   localStorage.setItem("profile", JSON.stringify(userProfile));
 }
 
-
 function getCategory(title) {
   title = title.toLowerCase();
 
   if (title.includes("music")) return "music";
-  if (title.includes("game") || title.includes("minecraft")) return "gaming";
+  if (title.includes("game")) return "gaming";
   if (title.includes("tech") || title.includes("ai")) return "tech";
   if (title.includes("news")) return "news";
 
   return "general";
 }
 
-
-let watchStart = 0;
-let currentVideoId = null;
-
-function startWatch(videoId) {
-  currentVideoId = videoId;
-  watchStart = Date.now();
-}
-
-function trackVideo(category) {
+function trackVideo(category, id) {
   userProfile.categories[category] =
     (userProfile.categories[category] || 0) + 1;
 
+  userProfile.seen[id] = true;
   saveProfile();
 }
 
+function getTopCategory() {
+  let top = null;
+  let max = 0;
+
+  for (let c in userProfile.categories) {
+    if (userProfile.categories[c] > max) {
+      max = userProfile.categories[c];
+      top = c;
+    }
+  }
+  return top;
+}
 
 let loading = false;
+let currentQuery = null;
+
+// REQUIRE SEARCH FIRST
+if (userProfile.searches.length === 0) {
+  document.getElementById("feed").innerHTML =
+    "<p style='text-align:center;'>Search something to start</p>";
+}
+
+async function searchVideos() {
+  const query = document.getElementById("searchInput").value.trim();
+  if (!query) return;
+
+  currentQuery = query;
+  userProfile.searches.push(query);
+  saveProfile();
+
+  document.getElementById("feed").innerHTML = "";
+  loadVideos(true);
+}
 
 window.addEventListener("scroll", () => {
-  if (loading) return;
+  if (loading || !currentQuery) return;
 
   if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
     loadVideos();
   }
 });
 
-
-async function loadVideos() {
+async function loadVideos(reset = false) {
   try {
     loading = true;
 
-    const res = await fetch("https://youtube-reco.charlieprenticemc.workers.dev/feed");
+    let url = "https://youtube-reco.charlieprenticemc.workers.dev/feed";
+
+    if (currentQuery) {
+      url += "?q=" + encodeURIComponent(currentQuery);
+    }
+
+    const res = await fetch(url);
     const data = await res.json();
 
     const feed = document.getElementById("feed");
 
     if (!data.items) {
-      feed.innerHTML = "<p style='color:red;'>No videos found</p>";
+      feed.innerHTML = "<p>No videos found</p>";
       loading = false;
       return;
     }
 
-    data.items.forEach(video => {
+    const topCategory = getTopCategory();
+
+    // PERSONALIZATION SORT
+    let videos = data.items.filter(v => !userProfile.seen[v.id]);
+
+    if (topCategory) {
+      videos.sort((a, b) => {
+        const aMatch = getCategory(a.snippet.title) === topCategory;
+        const bMatch = getCategory(b.snippet.title) === topCategory;
+        return bMatch - aMatch;
+      });
+    }
+
+    videos.forEach(video => {
       const videoId = video.id;
       const title = video.snippet.title;
       const category = getCategory(title);
@@ -166,10 +235,7 @@ async function loadVideos() {
         <h3>${title}</h3>
       `;
 
-      div.onclick = () => {
-        trackVideo(category);
-        startWatch(videoId);
-      };
+      div.onclick = () => trackVideo(category, videoId);
 
       feed.appendChild(div);
     });
@@ -182,9 +248,7 @@ async function loadVideos() {
   }
 }
 
-
-loadVideos();
 </script>
-  
+
 </body>
 </html>
