@@ -1,39 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Term 3 Math Games</title>
+  <title>Sci Calculator</title>
 
   <style>
     body {
       margin: 0;
       font-family: Arial;
-      background: #0f0f0f;
+      background: black;
       color: white;
     }
 
-    /* CALCULATOR SCREEN */
+    /* LOCK SCREEN */
     #lockScreen {
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      background: black;
     }
 
     .calc {
-      width: 250px;
-      background: #222;
+      width: 90vw;
+      max-width: 400px;
+      background: #1c1c1c;
       padding: 20px;
-      border-radius: 15px;
+      border-radius: 20px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.8);
     }
 
     .display {
       background: black;
       color: lime;
-      padding: 10px;
-      margin-bottom: 10px;
+      font-size: 32px;
+      padding: 15px;
       text-align: right;
-      font-size: 20px;
+      border-radius: 10px;
+      margin-bottom: 15px;
     }
 
     .buttons {
@@ -43,23 +45,34 @@
     }
 
     .btn {
-      padding: 15px;
-      background: #333;
+      padding: 18px;
       text-align: center;
+      border-radius: 10px;
       cursor: pointer;
-      border-radius: 8px;
+      background: #333;
+      font-size: 18px;
     }
 
-    /* MAIN APP */
+    .btn.orange {
+      background: #ff9500;
+      color: white;
+    }
+
+    .btn.dark {
+      background: #2a2a2a;
+    }
+
+    /* APP */
     #app {
       display: none;
+      background: #0f0f0f;
+      min-height: 100vh;
     }
 
     header {
       display: flex;
-      align-items: center;
-      gap: 15px;
-      padding: 10px 20px;
+      gap: 10px;
+      padding: 10px;
       border-bottom: 1px solid #222;
     }
 
@@ -104,61 +117,95 @@
 
 <body>
 
-<!-- 🔒 LOCK SCREEN -->
+<!-- CALCULATOR -->
 <div id="lockScreen">
   <div class="calc">
     <div id="display" class="display">0</div>
+
     <div class="buttons">
+      <div class="btn dark" onclick="clearDisplay()">C</div>
+      <div class="btn dark" onclick="press('/')">÷</div>
+      <div class="btn dark" onclick="press('*')">×</div>
+      <div class="btn orange" onclick="press('-')">−</div>
+
       <div class="btn" onclick="press(7)">7</div>
       <div class="btn" onclick="press(8)">8</div>
       <div class="btn" onclick="press(9)">9</div>
-      <div class="btn" onclick="clearDisplay()">C</div>
+      <div class="btn orange" onclick="press('+')">+</div>
 
       <div class="btn" onclick="press(4)">4</div>
       <div class="btn" onclick="press(5)">5</div>
       <div class="btn" onclick="press(6)">6</div>
-      <div class="btn" onclick="press(0)">0</div>
+      <div class="btn dark" onclick="square()">x²</div>
 
       <div class="btn" onclick="press(1)">1</div>
       <div class="btn" onclick="press(2)">2</div>
       <div class="btn" onclick="press(3)">3</div>
-      <div class="btn" onclick="press(9)">9</div>
+      <div class="btn dark" onclick="sqrt()">√</div>
+
+      <div class="btn" onclick="press(0)">0</div>
+      <div class="btn" onclick="press('.')">.</div>
+      <div class="btn orange" onclick="calculate()">=</div>
+      <div class="btn orange" onclick="press(9)">9</div>
     </div>
   </div>
 </div>
 
-<!-- 🎬 APP -->
+<!-- APP -->
 <div id="app">
-
 <header>
   <div class="logo" onclick="goHome()">YouTube+</div>
-  <input id="searchInput" placeholder="Search...">
+  <input id="searchInput">
   <button onclick="search()">Search</button>
 </header>
 
 <div id="feed" class="feed"></div>
-
 </div>
 
 <script>
 let input = "";
 
-function press(num) {
-  input += num;
-  document.getElementById("display").innerText = input;
+function press(val) {
+  input += val;
+  updateDisplay();
 
-  if (input === "9999") {
-    document.getElementById("lockScreen").style.display = "none";
-    document.getElementById("app").style.display = "block";
-    loadHome();
-  }
+  if (input === "9999") unlock();
+  if (input.length > 10) input = "";
+}
 
-  if (input.length > 4) input = "";
+function updateDisplay() {
+  document.getElementById("display").innerText = input || "0";
 }
 
 function clearDisplay() {
   input = "";
-  document.getElementById("display").innerText = "0";
+  updateDisplay();
+}
+
+function calculate() {
+  try {
+    input = eval(input).toString();
+    updateDisplay();
+  } catch {
+    input = "";
+    updateDisplay();
+  }
+}
+
+function square() {
+  input = (eval(input) ** 2).toString();
+  updateDisplay();
+}
+
+function sqrt() {
+  input = Math.sqrt(eval(input)).toString();
+  updateDisplay();
+}
+
+function unlock() {
+  document.getElementById("lockScreen").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  loadHome();
 }
 
 /* PROFILE */
@@ -211,7 +258,7 @@ async function search() {
   render(vids);
 }
 
-/* HOME (SMART RECOMMENDATIONS) */
+/* SMART HOME */
 async function loadHome() {
   const searches = Object.entries(profile.searches);
 
@@ -221,7 +268,6 @@ async function loadHome() {
     return;
   }
 
-  // sort by most used
   searches.sort((a, b) => b[1] - a[1]);
 
   let allVideos = [];
@@ -234,7 +280,6 @@ async function loadHome() {
   render(allVideos);
 }
 
-/* HOME BUTTON */
 function goHome() {
   document.getElementById("searchInput").value = "";
   loadHome();
