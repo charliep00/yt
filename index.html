@@ -1,253 +1,185 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <title>YouTube Feed+</title>
-
   <style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #0f0f0f, #1a1a2e, #0f0f0f);
-    color: white;
-  }
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #0f0f0f;
+      color: white;
+    }
 
-  header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 15px;
-    background: rgba(20, 20, 20, 0.7);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 10px 20px;
+      background: #0f0f0f;
+      border-bottom: 1px solid #222;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-  .logo {
-    width: 28px;
-    height: 28px;
-  }
+    .logo {
+      color: red;
+      font-weight: bold;
+      font-size: 20px;
+      cursor: pointer; /* 👈 makes it clickable */
+    }
 
-  .title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 20px;
-    font-weight: bold;
-  }
+    input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 20px;
+      border: none;
+      background: #222;
+      color: white;
+    }
 
-  .search-box {
-    margin-top: 10px;
-    display: flex;
-    gap: 10px;
-  }
+    button {
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: none;
+      background: red;
+      color: white;
+      cursor: pointer;
+    }
 
-  input {
-    padding: 8px;
-    border-radius: 8px;
-    border: none;
-    width: 200px;
-  }
+    .feed {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+      padding: 20px;
+    }
 
-  button {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    background: #ff0000;
-    color: white;
-  }
+    .card {
+      cursor: pointer;
+    }
 
-  .feed {
-    padding: 25px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
-  }
+    iframe {
+      width: 100%;
+      height: 180px;
+      border-radius: 10px;
+      border: none;
+    }
 
-  .card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px;
-    padding: 10px;
-    backdrop-filter: blur(12px);
-    transition: 0.3s ease;
-    cursor: pointer;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  }
+    h3 {
+      font-size: 14px;
+      margin: 8px 0;
+    }
 
-  .card:hover {
-    transform: translateY(-6px);
-  }
-
-  iframe {
-    width: 100%;
-    height: 200px;
-    border-radius: 12px;
-    border: none;
-  }
-
-  h3 {
-    font-size: 14px;
-    margin: 10px 5px 5px;
-    color: #ddd;
-  }
+    .center {
+      text-align: center;
+      margin-top: 100px;
+    }
   </style>
 </head>
 
 <body>
 
 <header>
-  <div class="title">
-    <svg class="logo" viewBox="0 0 24 24" fill="red">
-      <path d="M10 15l5.19-3L10 9v6z"/>
-    </svg>
-    YouTube Feed+
-  </div>
+  <!-- 👇 CLICKABLE LOGO -->
+  <div class="logo" onclick="goHome()">YouTube+</div>
 
-  <div class="search-box">
-    <input id="searchInput" placeholder="Search videos..." />
-    <button onclick="searchVideos()">Search</button>
-  </div>
+  <input id="searchInput" placeholder="Search YouTube...">
+  <button onclick="search()">Search</button>
 </header>
 
+<div id="welcome" class="center"></div>
 <div class="feed" id="feed"></div>
 
 <script>
-
-let userProfile = JSON.parse(localStorage.getItem("profile")) || {
-  categories: {},
+let profile = JSON.parse(localStorage.getItem("profile")) || {
   searches: [],
-  seen: {}
+  categories: {}
 };
 
-function saveProfile() {
-  localStorage.setItem("profile", JSON.stringify(userProfile));
+function save() {
+  localStorage.setItem("profile", JSON.stringify(profile));
 }
 
 function getCategory(title) {
   title = title.toLowerCase();
-
   if (title.includes("music")) return "music";
   if (title.includes("game")) return "gaming";
-  if (title.includes("tech") || title.includes("ai")) return "tech";
   if (title.includes("news")) return "news";
-
   return "general";
 }
 
-function trackVideo(category, id) {
-  userProfile.categories[category] =
-    (userProfile.categories[category] || 0) + 1;
-
-  userProfile.seen[id] = true;
-  saveProfile();
+function track(title) {
+  const cat = getCategory(title);
+  profile.categories[cat] = (profile.categories[cat] || 0) + 1;
+  save();
 }
 
-function getTopCategory() {
-  let top = null;
-  let max = 0;
-
-  for (let c in userProfile.categories) {
-    if (userProfile.categories[c] > max) {
-      max = userProfile.categories[c];
-      top = c;
-    }
-  }
-  return top;
+async function fetchVideos(query) {
+  const res = await fetch(
+    "https://youtube-reco.charlieprenticemc.workers.dev/feed?q=" + encodeURIComponent(query)
+  );
+  const data = await res.json();
+  return data.items || [];
 }
 
-let loading = false;
-let currentQuery = null;
+function render(videos) {
+  const feed = document.getElementById("feed");
+  feed.innerHTML = "";
 
-// REQUIRE SEARCH FIRST
-if (userProfile.searches.length === 0) {
-  document.getElementById("feed").innerHTML =
-    "<p style='text-align:center;'>Search something to start</p>";
+  videos.forEach(v => {
+    const id = v.id.videoId;
+    const title = v.snippet.title;
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>
+      <h3>${title}</h3>
+    `;
+
+    div.onclick = () => track(title);
+
+    feed.appendChild(div);
+  });
 }
 
-async function searchVideos() {
-  const query = document.getElementById("searchInput").value.trim();
+async function search() {
+  const query = document.getElementById("searchInput").value;
   if (!query) return;
 
-  currentQuery = query;
-  userProfile.searches.push(query);
-  saveProfile();
+  profile.searches.push(query);
+  save();
 
-  document.getElementById("feed").innerHTML = "";
-  loadVideos(true);
+  const videos = await fetchVideos(query);
+  render(videos);
+
+  document.getElementById("welcome").innerHTML = "";
 }
 
-window.addEventListener("scroll", () => {
-  if (loading || !currentQuery) return;
+async function loadHome() {
+  const welcome = document.getElementById("welcome");
 
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
-    loadVideos();
+  if (profile.searches.length === 0) {
+    welcome.innerHTML = "<h2>Search something to start your feed</h2>";
+    document.getElementById("feed").innerHTML = "";
+    return;
   }
-});
 
-async function loadVideos(reset = false) {
-  try {
-    loading = true;
+  const lastSearch = profile.searches[profile.searches.length - 1];
+  const videos = await fetchVideos(lastSearch);
+  render(videos);
 
-    let url = "https://youtube-reco.charlieprenticemc.workers.dev/feed";
-
-    if (currentQuery) {
-      url += "?q=" + encodeURIComponent(currentQuery);
-    }
-
-    const res = await fetch(url);
-    const data = await res.json();
-
-    const feed = document.getElementById("feed");
-
-    if (!data.items) {
-      feed.innerHTML = "<p>No videos found</p>";
-      loading = false;
-      return;
-    }
-
-    const topCategory = getTopCategory();
-
-    // PERSONALIZATION SORT
-    let videos = data.items.filter(v => !userProfile.seen[v.id]);
-
-    if (topCategory) {
-      videos.sort((a, b) => {
-        const aMatch = getCategory(a.snippet.title) === topCategory;
-        const bMatch = getCategory(b.snippet.title) === topCategory;
-        return bMatch - aMatch;
-      });
-    }
-
-    videos.forEach(video => {
-      const videoId = video.id;
-      const title = video.snippet.title;
-      const category = getCategory(title);
-
-      const div = document.createElement("div");
-      div.className = "card";
-
-      div.innerHTML = `
-        <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-        <h3>${title}</h3>
-      `;
-
-      div.onclick = () => trackVideo(category, videoId);
-
-      feed.appendChild(div);
-    });
-
-    loading = false;
-
-  } catch (err) {
-    console.error(err);
-    loading = false;
-  }
+  welcome.innerHTML = "<h3>Recommended for you (based on your searches)</h3>";
 }
 
+/* 👇 NEW FUNCTION */
+function goHome() {
+  document.getElementById("searchInput").value = "";
+  loadHome();
+}
+
+loadHome();
 </script>
 
 </body>
