@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <title>Math Test Revision Games</title>
   <style>
   body {
@@ -84,30 +85,19 @@
 <div class="feed" id="feed"></div>
 
 <script>
-const API_KEY = "AlzaSyCfB4WWcj3zTnH8BXIFYVZxLUTLXY33SJg";
 
 async function loadVideos() {
   try {
-    const url =
-      "https://www.googleapis.com/youtube/v3/videos" +
-      "?part=snippet" +
-      "&chart=mostPopular" +
-      "&maxResults=12" +
-      "&regionCode=US" +
-      "&key=" + API_KEY;
-
-    const res = await fetch(url);
+    const res = await fetch("https://youtube-reco.charlieprenticemc.workers.dev/feed");
     const data = await res.json();
 
-    console.log("API RESPONSE:", data);
+    console.log("WORKER DATA:", data);
 
     const feed = document.getElementById("feed");
+    feed.innerHTML = "";
 
     if (!data.items) {
-      feed.innerHTML = `
-        <p style="color:red;">
-          API failed. Check your key, quota, or restrictions.
-        </p>`;
+      feed.innerHTML = "<p style='color:red;'>Worker returned no items</p>";
       return;
     }
 
@@ -127,15 +117,17 @@ async function loadVideos() {
 
       div.onclick = () => trackVideo(category);
 
-      document.getElementById("feed").appendChild(div);
+      feed.appendChild(div);
     });
 
   } catch (err) {
     console.error(err);
     document.getElementById("feed").innerHTML =
-      "<p style='color:red;'>Network/API error</p>";
+      "<p style='color:red;'>Failed to load feed</p>";
   }
 }
+
+loadVideos();
 
 loadVideos();
 </script>
