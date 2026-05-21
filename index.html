@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My YouTube Page</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      margin: 20px;
+      background: #111;
+      color: white;
+    }
+    input {
+      width: 60%;
+      padding: 10px;
+      margin: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    iframe {
+      margin-top: 20px;
+      width: 80%;
+      height: 450px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>YouTube Viewer</h1>
+
+  <input id="videoId" placeholder="Paste YouTube video link or ID">
+  <button onclick="loadVideo()">Play</button>
+
+  <div>
+    <iframe id="player"
+      src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+      frameborder="0"
+      allowfullscreen>
+    </iframe>
+  </div>
+
+  <script>
+    function loadVideo() {
+      let input = document.getElementById("videoId").value;
+
+      // If full link, extract ID
+      let match = input.match(/(?:v=|youtu.be\/)([a-zA-Z0-9_-]{11})/);
+      let videoId = match ? match[1] : input;
+
+      document.getElementById("player").src =
+        "https://www.youtube.com/embed/" + videoId;
+    }
+  </script>
+
+</body>
+</html>
