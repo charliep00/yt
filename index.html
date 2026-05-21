@@ -2,22 +2,20 @@
 <html>
 <head>
   <title>Sci Calculator</title>
-
   <style>
     body {
       margin: 0;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       background: #0f0f0f;
       color: white;
     }
 
-    /* LOCK SCREEN */
     #lockScreen {
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      background: black;
+      background: #000;
     }
 
     .calc {
@@ -26,6 +24,7 @@
       background: #1c1c1c;
       padding: 20px;
       border-radius: 20px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.8);
     }
 
     .display {
@@ -36,6 +35,7 @@
       text-align: right;
       border-radius: 10px;
       margin-bottom: 15px;
+      min-height: 42px;
     }
 
     .buttons {
@@ -50,87 +50,196 @@
       border-radius: 10px;
       cursor: pointer;
       background: #333;
+      user-select: none;
     }
 
     .orange { background: #ff9500; }
     .dark { background: #2a2a2a; }
 
-    /* APP */
-    #app { display: none; }
+    #app { display: none; min-height: 100vh; }
 
     header {
       display: flex;
       gap: 10px;
+      align-items: center;
       padding: 10px;
       background: #181818;
       position: sticky;
       top: 0;
+      z-index: 10;
+      border-bottom: 1px solid #222;
     }
 
     .logo {
       color: red;
       font-weight: bold;
       cursor: pointer;
+      white-space: nowrap;
     }
 
-    input {
+    .searchWrap {
       flex: 1;
-      padding: 10px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .searchWrap input {
+      flex: 1;
+      padding: 10px 12px;
       border-radius: 20px;
       border: none;
       background: #222;
       color: white;
     }
 
-    button {
+    .searchWrap button {
       background: red;
       color: white;
       border: none;
       border-radius: 20px;
-      padding: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
     }
 
-    /* HOME GRID */
-    .feed {
+    #homeView {
+      padding: 16px;
+    }
+
+    .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 15px;
-      padding: 20px;
+      gap: 16px;
     }
 
     .card {
       cursor: pointer;
     }
 
-    iframe {
+    .thumb {
       width: 100%;
-      height: 180px;
-      border-radius: 10px;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-radius: 12px;
+      background: #222;
+      display: block;
     }
 
-    /* WATCH PAGE (YouTube style) */
-    #watchPage {
+    .title {
+      font-size: 14px;
+      margin: 8px 0 0;
+      line-height: 1.35;
+    }
+
+    .channel {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    #watchView {
       display: none;
-      padding: 20px;
+      padding: 16px;
+    }
+
+    .watchLayout {
+      display: grid;
+      grid-template-columns: minmax(0, 2.2fr) 380px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .playerBox {
+      min-width: 0;
     }
 
     #watchVideo {
       width: 100%;
-      height: 60vh;
-      border-radius: 12px;
+      aspect-ratio: 16 / 9;
+      border: none;
+      border-radius: 14px;
+      background: black;
     }
 
-    .back {
-      margin-bottom: 10px;
-      cursor: pointer;
+    #watchTitle {
+      font-size: 18px;
+      margin: 12px 0 6px;
+      line-height: 1.35;
+    }
+
+    #watchChannel {
       color: #aaa;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .recCard {
+      display: grid;
+      grid-template-columns: 168px 1fr;
+      gap: 10px;
+      cursor: pointer;
+      align-items: start;
+    }
+
+    .recThumb {
+      width: 168px;
+      height: 94px;
+      object-fit: cover;
+      border-radius: 10px;
+      background: #222;
+    }
+
+    .recTitle {
+      font-size: 13px;
+      line-height: 1.35;
+      margin: 0 0 4px;
+    }
+
+    .recChannel {
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .backLink {
+      color: #aaa;
+      cursor: pointer;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    .emptyMsg {
+      text-align: center;
+      margin: 60px 0;
+      color: #aaa;
+    }
+
+    @media (max-width: 1100px) {
+      .watchLayout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        margin-top: 10px;
+      }
+
+      .recCard {
+        grid-template-columns: 140px 1fr;
+      }
+
+      .recThumb {
+        width: 140px;
+        height: 79px;
+      }
     }
   </style>
 </head>
-
 <body>
 
-<!-- CALCULATOR -->
 <div id="lockScreen">
   <div class="calc">
     <div id="display" class="display">0</div>
@@ -148,48 +257,68 @@
 
       <div class="btn" onclick="press(4)">4</div>
       <div class="btn" onclick="press(5)">5</div>
-      <div class="btn" onclick="press(6)">x²</div>
-      <div class="btn dark" onclick="sqrt()">√</div>
+      <div class="btn" onclick="press(6)">6</div>
+      <div class="btn dark" onclick="square()">x²</div>
 
       <div class="btn" onclick="press(1)">1</div>
       <div class="btn" onclick="press(2)">2</div>
       <div class="btn" onclick="press(3)">3</div>
-      <div class="btn orange" onclick="calculate()">=</div>
+      <div class="btn dark" onclick="sqrt()">√</div>
 
       <div class="btn" onclick="press(0)">0</div>
+      <div class="btn orange" onclick="calculate()">=</div>
+      <div class="btn dark" onclick="press('.')">.</div>
       <div class="btn orange" onclick="unlock()">ENTER</div>
     </div>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
+  <header>
+    <div class="logo" onclick="goHome()">YouTube+</div>
+    <div class="searchWrap">
+      <input id="searchInput" placeholder="Search" onkeydown="if(event.key==='Enter') search()" />
+      <button onclick="search()">Search</button>
+    </div>
+  </header>
 
-<header>
-  <div class="logo" onclick="goHome()">YouTube+</div>
-  <input id="searchInput">
-  <button onclick="search()">Search</button>
-</header>
+  <div id="homeView">
+    <div id="homeGrid" class="grid"></div>
+  </div>
 
-<!-- HOME -->
-<div id="home" class="feed"></div>
+  <div id="watchView">
+    <div class="backLink" onclick="goHome()">← Back to home</div>
 
-<!-- WATCH -->
-<div id="watchPage">
-  <div class="back" onclick="goHome()">← Back</div>
-  <iframe id="watchVideo"></iframe>
-</div>
+    <div class="watchLayout">
+      <div class="playerBox">
+        <iframe id="watchVideo" allowfullscreen></iframe>
+        <div id="watchTitle"></div>
+        <div id="watchChannel"></div>
+      </div>
 
+      <div class="sidebar" id="sidebar"></div>
+    </div>
+  </div>
 </div>
 
 <script>
+const API_BASE = "https://youtube-reco.charlieprenticemc.workers.dev";
+
+const clientIdKey = "yt_client_id";
+let clientId = localStorage.getItem(clientIdKey);
+if (!clientId) {
+  clientId = crypto.randomUUID();
+  localStorage.setItem(clientIdKey, clientId);
+}
 
 let input = "";
+let currentVideo = null;
 
 function press(v) {
-  input += v;
+  input += String(v);
   document.getElementById("display").innerText = input || "0";
   if (input === "9999") unlock();
+  if (input.length > 12) input = "";
 }
 
 function clearDisplay() {
@@ -198,13 +327,30 @@ function clearDisplay() {
 }
 
 function calculate() {
-  input = eval(input).toString();
-  document.getElementById("display").innerText = input;
+  try {
+    input = eval(input).toString();
+  } catch {
+    input = "";
+  }
+  document.getElementById("display").innerText = input || "0";
+}
+
+function square() {
+  try {
+    input = Math.pow(eval(input || "0"), 2).toString();
+  } catch {
+    input = "";
+  }
+  document.getElementById("display").innerText = input || "0";
 }
 
 function sqrt() {
-  input = Math.sqrt(eval(input)).toString();
-  document.getElementById("display").innerText = input;
+  try {
+    input = Math.sqrt(eval(input || "0")).toString();
+  } catch {
+    input = "";
+  }
+  document.getElementById("display").innerText = input || "0";
 }
 
 function unlock() {
@@ -213,102 +359,141 @@ function unlock() {
   loadHome();
 }
 
-/* PROFILE */
-let profile = JSON.parse(localStorage.getItem("profile")) || {
-  searches: {}
-};
-
-function save() {
-  localStorage.setItem("profile", JSON.stringify(profile));
+async function api(path) {
+  const res = await fetch(API_BASE + path);
+  return await res.json();
 }
 
-/* FETCH */
-async function fetchVideos(q="") {
-  const res = await fetch(
-    "https://youtube-reco.charlieprenticemc.workers.dev/feed?q=" + q
+function thumbUrl(v) {
+  return (
+    v.snippet?.thumbnails?.high?.url ||
+    v.snippet?.thumbnails?.medium?.url ||
+    v.snippet?.thumbnails?.default?.url ||
+    ""
   );
-  const data = await res.json();
-  return data.items || [];
 }
 
-/* HOME */
-async function loadHome() {
-  const feed = document.getElementById("home");
-  feed.innerHTML = "";
+function videoIdOf(v) {
+  return v?.id?.videoId || v?.id || "";
+}
 
-  const keys = Object.entries(profile.searches || {})
-    .sort((a,b)=>b[1]-a[1])
-    .slice(0,3);
+function openWatch(v) {
+  currentVideo = v;
 
-  let vids = [];
+  const id = videoIdOf(v);
+  const title = v.snippet?.title || "";
+  const channel = v.snippet?.channelTitle || "";
 
-  for (let k of keys) {
-    const v = await fetchVideos(k[0]);
-    vids = vids.concat(v);
+  document.getElementById("homeView").style.display = "none";
+  document.getElementById("watchView").style.display = "block";
+
+  document.getElementById("watchVideo").src =
+    "https://www.youtube.com/embed/" + encodeURIComponent(id);
+
+  document.getElementById("watchTitle").innerText = title;
+  document.getElementById("watchChannel").innerText = channel;
+
+  fetch(
+    `${API_BASE}/?mode=watch&clientId=${encodeURIComponent(clientId)}&videoId=${encodeURIComponent(id)}&title=${encodeURIComponent(title)}`
+  ).catch(() => {});
+
+  loadRelated(v);
+}
+
+async function loadRelated(v) {
+  const title = v.snippet?.title || "";
+  const id = videoIdOf(v);
+
+  const data = await api(
+    `/?mode=related&clientId=${encodeURIComponent(clientId)}&videoId=${encodeURIComponent(id)}&title=${encodeURIComponent(title)}`
+  );
+
+  renderSidebar(data.items || []);
+}
+
+function renderGrid(items) {
+  const grid = document.getElementById("homeGrid");
+  grid.innerHTML = "";
+
+  if (!items.length) {
+    grid.innerHTML = `<div class="emptyMsg">No videos found</div>`;
+    return;
   }
 
-  render(vids);
-}
+  items.forEach(v => {
+    const id = videoIdOf(v);
+    if (!id) return;
 
-/* RENDER */
-function render(videos) {
-  const feed = document.getElementById("home");
-  feed.innerHTML = "";
+    const card = document.createElement("div");
+    card.className = "card";
 
-  videos.forEach(v => {
-    const id = v.id.videoId;
-    const title = v.snippet.title;
-
-    const div = document.createElement("div");
-    div.className = "card";
-
-    div.innerHTML = `
-      <iframe src="https://www.youtube.com/embed/${id}"></iframe>
-      <p>${title}</p>
+    card.innerHTML = `
+      <img class="thumb" src="${thumbUrl(v)}" alt="">
+      <div class="title">${v.snippet?.title || ""}</div>
+      <div class="channel">${v.snippet?.channelTitle || ""}</div>
     `;
 
-    div.onclick = () => openWatch(id, title);
-
-    feed.appendChild(div);
+    card.onclick = () => openWatch(v);
+    grid.appendChild(card);
   });
 }
 
-/* WATCH PAGE */
-function openWatch(id, title) {
-  document.getElementById("home").style.display = "none";
-  document.getElementById("watchPage").style.display = "block";
+function renderSidebar(items) {
+  const side = document.getElementById("sidebar");
+  side.innerHTML = "";
 
-  document.getElementById("watchVideo").src =
-    "https://www.youtube.com/embed/" + id;
+  if (!items.length) {
+    side.innerHTML = `<div class="emptyMsg">No recommendations yet</div>`;
+    return;
+  }
 
-  fetch(
-    "https://youtube-reco.charlieprenticemc.workers.dev/feed?watch=" +
-    encodeURIComponent(title)
-  );
+  items.forEach(v => {
+    const id = videoIdOf(v);
+    if (!id) return;
 
-  profile.searches[title] = (profile.searches[title] || 0) + 1;
-  save();
+    const row = document.createElement("div");
+    row.className = "recCard";
+
+    row.innerHTML = `
+      <img class="recThumb" src="${thumbUrl(v)}" alt="">
+      <div>
+        <div class="recTitle">${v.snippet?.title || ""}</div>
+        <div class="recChannel">${v.snippet?.channelTitle || ""}</div>
+      </div>
+    `;
+
+    row.onclick = () => openWatch(v);
+    side.appendChild(row);
+  });
 }
 
-/* SEARCH */
+async function loadHome() {
+  document.getElementById("watchView").style.display = "none";
+  document.getElementById("homeView").style.display = "block";
+
+  const data = await api(`/?mode=home&clientId=${encodeURIComponent(clientId)}`);
+  renderGrid(data.items || []);
+}
+
 async function search() {
-  const q = document.getElementById("searchInput").value;
+  const q = document.getElementById("searchInput").value.trim();
   if (!q) return;
 
-  profile.searches[q] = (profile.searches[q] || 0) + 1;
-  save();
+  document.getElementById("watchView").style.display = "none";
+  document.getElementById("homeView").style.display = "block";
 
-  const vids = await fetchVideos(q);
-  render(vids);
+  const data = await api(
+    `/?mode=search&q=${encodeURIComponent(q)}&clientId=${encodeURIComponent(clientId)}`
+  );
+
+  renderGrid(data.items || []);
 }
 
-/* HOME BUTTON */
 function goHome() {
-  document.getElementById("watchPage").style.display = "none";
-  document.getElementById("home").style.display = "grid";
+  document.getElementById("searchInput").value = "";
+  currentVideo = null;
   loadHome();
 }
-
 </script>
 
 </body>
