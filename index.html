@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>"YouTube Unblocked </title>
+  <title>Math Test Revision Games</title>
   <style>
   body {
     margin: 0;
@@ -87,40 +87,54 @@
 const API_KEY = "AlzaSyCfB4WWcj3zTnH8BXIFYVZxLUTLXY33SJg";
 
 async function loadVideos() {
-  const url =
-    "https://www.googleapis.com/youtube/v3/videos" +
-    "?part=snippet" +
-    "&chart=mostPopular" +
-    "&maxResults=12" +
-    "&regionCode=US" +
-    "&key=" + API_KEY;
+  try {
+    const url =
+      "https://www.googleapis.com/youtube/v3/videos" +
+      "?part=snippet" +
+      "&chart=mostPopular" +
+      "&maxResults=12" +
+      "&regionCode=US" +
+      "&key=" + API_KEY;
 
-  const res = await fetch(url);
-  const data = await res.json();
+    const res = await fetch(url);
+    const data = await res.json();
 
-  const feed = document.getElementById("feed");
+    console.log("API RESPONSE:", data);
 
-  data.items.forEach(video => {
-    const videoId = video.id;
-    const title = video.snippet.title;
-    const category = getCategory(title);
+    const feed = document.getElementById("feed");
 
-    const div = document.createElement("div");
-    div.className = "card";
-    div.onclick = () => { 
-      trackVideo(category);
-    };
+    if (!data.items) {
+      feed.innerHTML = `
+        <p style="color:red;">
+          API failed. Check your key, quota, or restrictions.
+        </p>`;
+      return;
+    }
 
-    div.innerHTML = `
-      <iframe 
-        src="https://www.youtube.com/embed/${videoId}" 
-        allowfullscreen>
-      </iframe>
-      <h3>${title}</h3>
-    `;
+    data.items.forEach(video => {
+      const videoId = video.id;
+      const title = video.snippet.title;
 
-    feed.appendChild(div);
-  });
+      const div = document.createElement("div");
+      div.className = "card";
+
+      const category = getCategory(title);
+
+      div.innerHTML = `
+        <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
+        <h3>${title}</h3>
+      `;
+
+      div.onclick = () => trackVideo(category);
+
+      document.getElementById("feed").appendChild(div);
+    });
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById("feed").innerHTML =
+      "<p style='color:red;'>Network/API error</p>";
+  }
 }
 
 loadVideos();
