@@ -117,6 +117,11 @@ async function loadVideos() {
 
       div.onclick = () => trackVideo(category);
 
+      window.addEventListener("scroll", () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+    loadVideos();
+  }
+});
       feed.appendChild(div);
     });
 
@@ -129,7 +134,6 @@ async function loadVideos() {
 
 loadVideos();
 
-loadVideos();
 </script>
 <script>
 let userProfile = JSON.parse(localStorage.getItem("profile")) || {
@@ -171,6 +175,42 @@ function getCategory(title) {
   if (title.includes("news")) return "news";
 
   return "general";
+}
+  let userProfile = JSON.parse(localStorage.getItem("profile")) || {
+  categories: {},
+  likes: [],
+  dislikes: {},
+  watchTime: {}
+};
+
+function saveProfile() {
+  localStorage.setItem("profile", JSON.stringify(userProfile));
+}
+  function getCategory(title) {
+  title = title.toLowerCase();
+
+  if (title.includes("music")) return "music";
+  if (title.includes("game")) return "gaming";
+  if (title.includes("tech") || title.includes("ai")) return "tech";
+  if (title.includes("news")) return "news";
+
+  return "general";
+}
+  function likeVideo(id) {
+  userProfile.likes.push(id);
+  saveProfile();
+}
+
+function dislikeVideo(id) {
+  userProfile.dislikes.push(id);
+  saveProfile();
+}
+  let watchStart = 0;
+let currentVideoId = null;
+
+function startWatch(videoId) {
+  currentVideoId = videoId;
+  watchStart = Date.now();
 }
 </script>
   
