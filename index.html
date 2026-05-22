@@ -415,20 +415,24 @@ function renderGrid(items) {
   const grid = document.getElementById("homeGrid");
   grid.innerHTML = "";
 
-  if (!items.length) {
+  if (!items || items.length === 0) {
     grid.innerHTML = `<div class="emptyMsg">No videos found</div>`;
     return;
   }
+
+  let validCount = 0;
 
   items.forEach(v => {
     const id = videoIdOf(v);
     if (!id) return;
 
+    validCount++;
+
     const card = document.createElement("div");
     card.className = "card";
 
     card.innerHTML = `
-      <img class="thumb" src="${thumbUrl(v)}" alt="">
+      <img class="thumb" src="${thumbUrl(v)}">
       <div class="title">${v.snippet?.title || ""}</div>
       <div class="channel">${v.snippet?.channelTitle || ""}</div>
     `;
@@ -436,6 +440,11 @@ function renderGrid(items) {
     card.onclick = () => openWatch(v);
     grid.appendChild(card);
   });
+
+  // 🚑 fallback UI if filtering removed everything
+  if (validCount === 0) {
+    grid.innerHTML = `<div class="emptyMsg">Loading failed — try searching</div>`;
+  }
 }
 
 function renderSidebar(items) {
