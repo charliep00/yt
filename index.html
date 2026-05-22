@@ -1,514 +1,283 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sci Calculator</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f0f0f;
-      color: white;
-    }
+<title>Sci Calculator</title>
 
-    #lockScreen {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #000;
-    }
+<style>
+body { margin:0; font-family:Arial; background:#0f0f0f; color:white; }
 
-    .calc {
-      width: 95vw;
-      max-width: 420px;
-      background: #1c1c1c;
-      padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 0 40px rgba(0,0,0,0.8);
-    }
+/* CALC */
+#lockScreen {
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:black;
+}
 
-    .display {
-      background: black;
-      color: #00ff6a;
-      font-size: 34px;
-      padding: 15px;
-      text-align: right;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      min-height: 42px;
-    }
+.calc {
+  width:95vw;
+  max-width:420px;
+  background:#1c1c1c;
+  padding:20px;
+  border-radius:20px;
+}
 
-    .buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-    }
+.display {
+  background:black;
+  color:#00ff6a;
+  font-size:32px;
+  padding:15px;
+  text-align:right;
+  margin-bottom:15px;
+}
 
-    .btn {
-      padding: 18px;
-      text-align: center;
-      border-radius: 10px;
-      cursor: pointer;
-      background: #333;
-      user-select: none;
-    }
+.buttons {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
 
-    .orange { background: #ff9500; }
-    .dark { background: #2a2a2a; }
+.btn {
+  padding:18px;
+  text-align:center;
+  background:#333;
+  border-radius:10px;
+  cursor:pointer;
+}
 
-    #app { display: none; min-height: 100vh; }
+.orange { background:#ff9500; }
+.dark { background:#2a2a2a; }
 
-    header {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      background: #181818;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      border-bottom: 1px solid #222;
-    }
+/* APP */
+#app { display:none; }
 
-    .logo {
-      color: red;
-      font-weight: bold;
-      cursor: pointer;
-      white-space: nowrap;
-    }
+header {
+  display:flex;
+  gap:10px;
+  padding:10px;
+  background:#181818;
+}
 
-    .searchWrap {
-      flex: 1;
-      display: flex;
-      gap: 8px;
-    }
+.logo { color:red; cursor:pointer; }
 
-    .searchWrap input {
-      flex: 1;
-      padding: 10px 12px;
-      border-radius: 20px;
-      border: none;
-      background: #222;
-      color: white;
-    }
+input {
+  flex:1;
+  padding:10px;
+  border-radius:20px;
+  border:none;
+  background:#222;
+  color:white;
+}
 
-    .searchWrap button {
-      background: red;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      padding: 10px 14px;
-      cursor: pointer;
-    }
+button {
+  background:red;
+  border:none;
+  color:white;
+  padding:10px;
+  border-radius:20px;
+}
 
-    #homeView {
-      padding: 16px;
-    }
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:15px;
+  padding:20px;
+}
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-    }
+.thumb {
+  width:100%;
+  border-radius:10px;
+}
 
-    .card {
-      cursor: pointer;
-    }
-
-    .thumb {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      object-fit: cover;
-      border-radius: 12px;
-      background: #222;
-      display: block;
-    }
-
-    .title {
-      font-size: 14px;
-      margin: 8px 0 0;
-      line-height: 1.35;
-    }
-
-    .channel {
-      font-size: 12px;
-      color: #aaa;
-      margin-top: 4px;
-    }
-
-    #watchView {
-      display: none;
-      padding: 16px;
-    }
-
-    .watchLayout {
-      display: grid;
-      grid-template-columns: minmax(0, 2.2fr) 380px;
-      gap: 20px;
-      align-items: start;
-    }
-
-    .playerBox {
-      min-width: 0;
-    }
-
-    #watchVideo {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      border: none;
-      border-radius: 14px;
-      background: black;
-    }
-
-    #watchTitle {
-      font-size: 18px;
-      margin: 12px 0 6px;
-      line-height: 1.35;
-    }
-
-    #watchChannel {
-      color: #aaa;
-      font-size: 13px;
-      margin-bottom: 12px;
-    }
-
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .recCard {
-      display: grid;
-      grid-template-columns: 168px 1fr;
-      gap: 10px;
-      cursor: pointer;
-      align-items: start;
-    }
-
-    .recThumb {
-      width: 168px;
-      height: 94px;
-      object-fit: cover;
-      border-radius: 10px;
-      background: #222;
-    }
-
-    .recTitle {
-      font-size: 13px;
-      line-height: 1.35;
-      margin: 0 0 4px;
-    }
-
-    .recChannel {
-      font-size: 12px;
-      color: #aaa;
-    }
-
-    .backLink {
-      color: #aaa;
-      cursor: pointer;
-      margin-bottom: 12px;
-      display: inline-block;
-    }
-
-    .emptyMsg {
-      text-align: center;
-      margin: 60px 0;
-      color: #aaa;
-    }
-
-    @media (max-width: 1100px) {
-      .watchLayout {
-        grid-template-columns: 1fr;
-      }
-
-      .sidebar {
-        margin-top: 10px;
-      }
-
-      .recCard {
-        grid-template-columns: 140px 1fr;
-      }
-
-      .recThumb {
-        width: 140px;
-        height: 79px;
-      }
-    }
-  </style>
+#watchView { display:none; padding:20px; }
+</style>
 </head>
+
 <body>
 
+<!-- CALCULATOR -->
 <div id="lockScreen">
-  <div class="calc">
-    <div id="display" class="display">0</div>
+<div class="calc">
+<div id="display" class="display">0</div>
 
-    <div class="buttons">
-      <div class="btn dark" onclick="clearDisplay()">C</div>
-      <div class="btn dark" onclick="press('/')">÷</div>
-      <div class="btn dark" onclick="press('*')">×</div>
-      <div class="btn orange" onclick="press('-')">−</div>
+<div class="buttons">
+<div class="btn dark" onclick="clearDisplay()">C</div>
+<div class="btn dark" onclick="press('/')">÷</div>
+<div class="btn dark" onclick="press('*')">×</div>
+<div class="btn orange" onclick="press('-')">−</div>
 
-      <div class="btn" onclick="press(7)">7</div>
-      <div class="btn" onclick="press(8)">8</div>
-      <div class="btn" onclick="press(9)">9</div>
-      <div class="btn orange" onclick="press('+')">+</div>
+<div class="btn" onclick="press(7)">7</div>
+<div class="btn" onclick="press(8)">8</div>
+<div class="btn" onclick="press(9)">9</div>
+<div class="btn orange" onclick="press('+')">+</div>
 
-      <div class="btn" onclick="press(4)">4</div>
-      <div class="btn" onclick="press(5)">5</div>
-      <div class="btn" onclick="press(6)">6</div>
-      <div class="btn dark" onclick="square()">x²</div>
+<div class="btn" onclick="press(4)">4</div>
+<div class="btn" onclick="press(5)">5</div>
+<div class="btn" onclick="press(6)">6</div>
+<div class="btn dark" onclick="square()">x²</div>
 
-      <div class="btn" onclick="press(1)">1</div>
-      <div class="btn" onclick="press(2)">2</div>
-      <div class="btn" onclick="press(3)">3</div>
-      <div class="btn dark" onclick="sqrt()">√</div>
+<div class="btn" onclick="press(1)">1</div>
+<div class="btn" onclick="press(2)">2</div>
+<div class="btn" onclick="press(3)">3</div>
+<div class="btn dark" onclick="sqrt()">√</div>
 
-      <div class="btn" onclick="press(0)">0</div>
-      <div class="btn orange" onclick="calculate()">=</div>
-      <div class="btn dark" onclick="press('.')">.</div>
-      <div class="btn orange" onclick="unlock()">ENTER</div>
-    </div>
-  </div>
+<div class="btn" onclick="press(0)">0</div>
+<div class="btn" onclick="press('.')">.</div>
+<div class="btn orange" onclick="calculate()">=</div>
+<div class="btn orange" onclick="tryUnlock()">ENTER</div>
+</div>
+</div>
 </div>
 
+<!-- APP -->
 <div id="app">
-  <header>
-    <div class="logo" onclick="goHome()">YouTube+</div>
-    <div class="searchWrap">
-      <input id="searchInput" placeholder="Search" onkeydown="if(event.key==='Enter') search()" />
-      <button onclick="search()">Search</button>
-    </div>
-  </header>
 
-  <div id="homeView">
-    <div id="homeGrid" class="grid"></div>
-  </div>
+<header>
+<div class="logo" onclick="goHome()">YouTube+</div>
+<input id="searchInput" placeholder="Search" onkeydown="if(event.key==='Enter') search()">
+<button onclick="search()">Search</button>
+</header>
 
-  <div id="watchView">
-    <div class="backLink" onclick="goHome()">← Back to home</div>
+<div id="feed" class="grid"></div>
 
-    <div class="watchLayout">
-      <div class="playerBox">
-        <iframe id="watchVideo" allowfullscreen></iframe>
-        <div id="watchTitle"></div>
-        <div id="watchChannel"></div>
-      </div>
+<div id="watchView">
+<iframe id="player" width="100%" height="400"></iframe>
+<h2 id="title"></h2>
+</div>
 
-      <div class="sidebar" id="sidebar"></div>
-    </div>
-  </div>
 </div>
 
 <script>
-const API_BASE = "https://youtube-reco.charlieprenticemc.workers.dev";
+const API = "https://youtube-reco.charlieprenticemc.workers.dev";
 
-const clientIdKey = "yt_client_id";
-let clientId = localStorage.getItem(clientIdKey);
+let clientId = localStorage.getItem("cid");
 if (!clientId) {
   clientId = crypto.randomUUID();
-  localStorage.setItem(clientIdKey, clientId);
+  localStorage.setItem("cid", clientId);
 }
 
-let input = "";
-let currentVideo = null;
+/* CALC */
+let input="";
 
-function press(v) {
-  input += String(v);
+function press(v){
+  input += v;
+  update();
+}
+
+function update(){
   document.getElementById("display").innerText = input || "0";
-  if (input === "9999") unlock();
-  if (input.length > 12) input = "";
 }
 
-function clearDisplay() {
-  input = "";
-  document.getElementById("display").innerText = "0";
+function clearDisplay(){
+  input="";
+  update();
 }
 
-function calculate() {
+function calculate(){
   try {
     input = eval(input).toString();
   } catch {
-    input = "";
+    input="";
   }
-  document.getElementById("display").innerText = input || "0";
+  update();
 }
 
-function square() {
-  try {
-    input = Math.pow(eval(input || "0"), 2).toString();
-  } catch {
-    input = "";
-  }
-  document.getElementById("display").innerText = input || "0";
+function square(){
+  try { input = (eval(input)**2).toString(); } catch {}
+  update();
 }
 
-function sqrt() {
-  try {
-    input = Math.sqrt(eval(input || "0")).toString();
-  } catch {
-    input = "";
-  }
-  document.getElementById("display").innerText = input || "0";
+function sqrt(){
+  try { input = Math.sqrt(eval(input)).toString(); } catch {}
+  update();
 }
 
-function unlock() {
-  document.getElementById("lockScreen").style.display = "none";
-  document.getElementById("app").style.display = "block";
+function tryUnlock(){
+  if(input === "9999"){
+    unlock();
+  } else {
+    input="";
+    update();
+  }
+}
+
+function unlock(){
+  document.getElementById("lockScreen").style.display="none";
+  document.getElementById("app").style.display="block";
   loadHome();
 }
 
-async function api(path) {
-  const res = await fetch(API_BASE + path);
+/* API */
+async function get(path){
+  const res = await fetch(API + path);
   return await res.json();
 }
 
-function thumbUrl(v) {
-  return (
-    v.snippet?.thumbnails?.high?.url ||
-    v.snippet?.thumbnails?.medium?.url ||
-    v.snippet?.thumbnails?.default?.url ||
-    ""
-  );
+function vid(v){
+  return v.id || v.id?.videoId || "";
 }
 
-function videoIdOf(v) {
-  return v?.id?.videoId || v?.id || "";
-}
+function render(items){
+  const feed=document.getElementById("feed");
+  feed.innerHTML="";
 
-function openWatch(v) {
-  currentVideo = v;
-
-  const id = videoIdOf(v);
-  const title = v.snippet?.title || "";
-  const channel = v.snippet?.channelTitle || "";
-
-  document.getElementById("homeView").style.display = "none";
-  document.getElementById("watchView").style.display = "block";
-
-  document.getElementById("watchVideo").src =
-    "https://www.youtube.com/embed/" + encodeURIComponent(id);
-
-  document.getElementById("watchTitle").innerText = title;
-  document.getElementById("watchChannel").innerText = channel;
-
-  fetch(
-    `${API_BASE}/?mode=watch&clientId=${encodeURIComponent(clientId)}&videoId=${encodeURIComponent(id)}&title=${encodeURIComponent(title)}`
-  ).catch(() => {});
-
-  loadRelated(v);
-}
-
-async function loadRelated(v) {
-  const title = v.snippet?.title || "";
-  const id = videoIdOf(v);
-
-  const data = await api(
-    `/?mode=related&clientId=${encodeURIComponent(clientId)}&videoId=${encodeURIComponent(id)}&title=${encodeURIComponent(title)}`
-  );
-
-  renderSidebar(data.items || []);
-}
-
-function renderGrid(items) {
-  const grid = document.getElementById("homeGrid");
-  grid.innerHTML = "";
-
-  if (!items || items.length === 0) {
-    grid.innerHTML = `<div class="emptyMsg">No videos found</div>`;
+  if(!items || items.length===0){
+    feed.innerHTML="<h2>No videos found</h2>";
     return;
   }
 
-  let validCount = 0;
+  items.forEach(v=>{
+    const id=vid(v);
+    if(!id) return;
 
-  items.forEach(v => {
-    const id = videoIdOf(v);
-    if (!id) return;
+    const div=document.createElement("div");
 
-    validCount++;
-
-    const card = document.createElement("div");
-    card.className = "card";
-
-    card.innerHTML = `
-      <img class="thumb" src="${thumbUrl(v)}">
-      <div class="title">${v.snippet?.title || ""}</div>
-      <div class="channel">${v.snippet?.channelTitle || ""}</div>
+    div.innerHTML=`
+      <img class="thumb" src="${v.snippet.thumbnails.medium.url}">
+      <p>${v.snippet.title}</p>
     `;
 
-    card.onclick = () => openWatch(v);
-    grid.appendChild(card);
-  });
+    div.onclick=()=>watch(v);
 
-  // 🚑 fallback UI if filtering removed everything
-  if (validCount === 0) {
-    grid.innerHTML = `<div class="emptyMsg">Loading failed — try searching</div>`;
-  }
-}
-
-function renderSidebar(items) {
-  const side = document.getElementById("sidebar");
-  side.innerHTML = "";
-
-  if (!items.length) {
-    side.innerHTML = `<div class="emptyMsg">No recommendations yet</div>`;
-    return;
-  }
-
-  items.forEach(v => {
-    const id = videoIdOf(v);
-    if (!id) return;
-
-    const row = document.createElement("div");
-    row.className = "recCard";
-
-    row.innerHTML = `
-      <img class="recThumb" src="${thumbUrl(v)}" alt="">
-      <div>
-        <div class="recTitle">${v.snippet?.title || ""}</div>
-        <div class="recChannel">${v.snippet?.channelTitle || ""}</div>
-      </div>
-    `;
-
-    row.onclick = () => openWatch(v);
-    side.appendChild(row);
+    feed.appendChild(div);
   });
 }
 
-async function loadHome() {
-  document.getElementById("watchView").style.display = "none";
-  document.getElementById("homeView").style.display = "block";
-
-  const data = await api(`/?mode=home&clientId=${encodeURIComponent(clientId)}`);
-  renderGrid(data.items || []);
+/* HOME */
+async function loadHome(){
+  const data=await get(`/?mode=home&clientId=${clientId}`);
+  render(data.items);
 }
 
-async function search() {
-  const q = document.getElementById("searchInput").value.trim();
-  if (!q) return;
+/* SEARCH */
+async function search(){
+  const q=document.getElementById("searchInput").value;
+  if(!q) return;
 
-  document.getElementById("watchView").style.display = "none";
-  document.getElementById("homeView").style.display = "block";
-
-  try {
-    const data = await api(
-      `/?mode=search&q=${encodeURIComponent(q)}&clientId=${encodeURIComponent(clientId)}`
-    );
-
-    console.log("SEARCH DATA:", data); // 👈 DEBUG
-
-    renderGrid(data.items || []);
-  } catch (e) {
-    console.error(e);
-    document.getElementById("homeGrid").innerHTML =
-      `<div class="emptyMsg">Search failed</div>`;
-  }
+  const data=await get(`/?mode=search&q=${encodeURIComponent(q)}&clientId=${clientId}`);
+  render(data.items);
 }
 
-function goHome() {
-  document.getElementById("searchInput").value = "";
-  currentVideo = null;
+/* WATCH */
+async function watch(v){
+  const id=vid(v);
+
+  document.getElementById("feed").style.display="none";
+  document.getElementById("watchView").style.display="block";
+
+  document.getElementById("player").src =
+    "https://www.youtube.com/embed/"+id;
+
+  document.getElementById("title").innerText = v.snippet.title;
+
+  await fetch(`${API}/?mode=watch&clientId=${clientId}&videoId=${id}&title=${encodeURIComponent(v.snippet.title)}`);
+}
+
+/* HOME BTN */
+function goHome(){
+  document.getElementById("watchView").style.display="none";
+  document.getElementById("feed").style.display="grid";
   loadHome();
 }
 </script>
