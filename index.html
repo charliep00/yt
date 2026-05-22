@@ -491,11 +491,19 @@ async function search() {
   document.getElementById("watchView").style.display = "none";
   document.getElementById("homeView").style.display = "block";
 
-  const data = await api(
-    `/?mode=search&q=${encodeURIComponent(q)}&clientId=${encodeURIComponent(clientId)}`
-  );
+  try {
+    const data = await api(
+      `/?mode=search&q=${encodeURIComponent(q)}&clientId=${encodeURIComponent(clientId)}`
+    );
 
-  renderGrid(data.items || []);
+    console.log("SEARCH DATA:", data); // 👈 DEBUG
+
+    renderGrid(data.items || []);
+  } catch (e) {
+    console.error(e);
+    document.getElementById("homeGrid").innerHTML =
+      `<div class="emptyMsg">Search failed</div>`;
+  }
 }
 
 function goHome() {
